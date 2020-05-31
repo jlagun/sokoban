@@ -86,7 +86,7 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
                                                                                boxes_initial_string,
                                                                                boxes_target_string,
                                                                                sokoban_string)
-    print(env._slave_env.render(mode='binary_map'))
+    print(query)
     try:
         result = list(prolog.query(query))
         rewards = []
@@ -111,18 +111,17 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
 
 if __name__ == "__main__":
 
-    number_of_trials = 1
+    number_of_trials = 10
     time_start = time.time()
 
     df = pd.DataFrame(columns=['seed', 'actions'])
-
+    seed = randint(100000,10000000)
     results = 0
     for seed in range(number_of_trials):
         print("Current trial {} result {}".format(seed, results))
-        new_result, actions = find_solution(size=8, num_boxes=2, time_limit=30, seed=randint(2000,10000))
+        new_result, actions = find_solution(size=8, num_boxes=2, time_limit=30, seed=seed)
         results += new_result
         df = df.append({'seed' : seed , 'actions' : actions} , ignore_index=True)
-
 
     print("Number of solutions: {}".format(results))
     print("Total time: {}".format(time.time() - time_start))
