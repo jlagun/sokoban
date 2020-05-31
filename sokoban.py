@@ -111,7 +111,7 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
 
 if __name__ == "__main__":
 
-    number_of_trials = 10
+    number_of_trials = 100
     time_start = time.time()
 
     df = pd.DataFrame(columns=['seed', 'actions'])
