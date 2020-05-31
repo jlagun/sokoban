@@ -2,7 +2,7 @@ from pyswip import Prolog
 from gym_sokoban.envs.sokoban_env_fast import SokobanEnvFast
 import time
 import pandas as pd
-
+from random import randint
 
 def flatten(container):
     for i in container:
@@ -32,6 +32,7 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
                          penalty_for_step=0)
     # The encoding of the board is described in README
     board = env.reset()
+
     wall = board[:,:,0] # this is a one-hot encoding of walls
     # For readibility first we deal with tops and then with rights
     tops = []
@@ -74,28 +75,23 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
 
     prolog = Prolog()
     prolog.consult("sokoban.pl")
-    query = "call_with_time_limit({},solve([{},{},{},{},{}],Solution))".format(time_limit,
+    prolog.assertz(":- table corner/1")
+    prolog.assertz(":- table neib/3")
+    prolog.assertz(":- table stuck/2")
+    prolog.assertz(":- table stuck/1")
+    prolog.assertz(":- table can_reach/4")
+    query = "call_with_time_limit({},solve([{},{},{},{},{}],Solution, SokobanMoves))".format(time_limit,
                                                                                tops_string,
                                                                                rights_string,
                                                                                boxes_initial_string,
                                                                                boxes_target_string,
                                                                                sokoban_string)
-
-    print('board: \n', board)
-    # print('zeros: \n', board[:,:,0])
-    # print('ones: \n', board[:,:,1])
-    # print('twos: \n', board[:,:,2])
-    # print('threes: \n', board[:,:,3])
-    # print('fours: \n', board[:,:,4])
-    # print('fives: \n', board[:, :, 5])
-    # print('sixes: \n', board[:, :, 6])
-    print(query)
+    print(env._slave_env.render(mode='binary_map'))
     try:
         result = list(prolog.query(query))
         rewards = []
-        print('result: ', result)
         for i, r in enumerate(result):
-            solution = r['Solution']
+            solution = r['SokobanMoves']
             actions = []
             for index in range(len(solution)):
                 move = str(solution[index]).split()[-1]
@@ -110,13 +106,12 @@ def find_solution(size=8, num_boxes=2, time_limit=10, seed=0):
         return 0, []
 
     except:
-        print('dupa')
         return 0, []
 
 
 if __name__ == "__main__":
 
-    number_of_trials = 100
+    number_of_trials = 1
     time_start = time.time()
 
     df = pd.DataFrame(columns=['seed', 'actions'])
@@ -124,7 +119,7 @@ if __name__ == "__main__":
     results = 0
     for seed in range(number_of_trials):
         print("Current trial {} result {}".format(seed, results))
-        new_result, actions = find_solution(size=5, num_boxes=2, time_limit=20, seed=seed)
+        new_result, actions = find_solution(size=8, num_boxes=2, time_limit=30, seed=randint(2000,10000))
         results += new_result
         df = df.append({'seed' : seed , 'actions' : actions} , ignore_index=True)
 

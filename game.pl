@@ -39,21 +39,18 @@
 /***************************************************************************/
 /* Game rules: solution or final state                                     */
 /***************************************************************************/
-solutionsArgs([], []).
-solutionsArgs([solution(X)|L], [X|R]) :- solutionsArgs(L, R).
+
 /* The puzzle is solved when all boxes are in a solution position, this is */
 /* the final_state.                                                        */
-final_state([_, _, _, Solutions, _], state(_, Boxes)) :-
-    solutionsArgs(Solutions, SolutionsA),
-    all_boxes_in_solution(Boxes, SolutionsA).
+final_state(sokoban, state(_Sokoban, Boxes)) :-
+    all_boxes_in_solution(Boxes), !.
 
 /* All boxes are in a the solution position when each one of them is at a  */
 /* solution position.                                                      */
-
-all_boxes_in_solution([], []).
-all_boxes_in_solution([box(XY)|Boxes], Solutions) :-
-    member(XY, Solutions)
-    all_boxes_in_solution(Boxes, Solutions).
+all_boxes_in_solution([]).
+all_boxes_in_solution([Box|Boxes]) :-
+    solution(Box),
+    all_boxes_in_solution(Boxes).
 
 
 /***************************************************************************/
@@ -63,14 +60,14 @@ all_boxes_in_solution([box(XY)|Boxes], Solutions) :-
 /* Some position for boxes must be avoided (unless they are solutions)     */
 /* because the Sokoban won't be able to move them further:                 */
 /*  - corners: the Sokoban can't move a box which is placed at a corner.   */
-:- table stuck/1.
+%:- table stuck/1.
 stuck(X) :-
     \+ solution(X),
     corner(X).
 
 /*  - horizontally adjacent boxes can only be moved up or down... if there */
 /*    are empty squares for the Sokoban to push and for the boxes to move. */
-:- table stuck/2.
+%:- table stuck/2.
 stuck(X, Y) :-
     (right(X,Y); right(Y,X)),
     (\+ solution(X); \+ solution(Y)),
@@ -92,7 +89,7 @@ stuck(X, Y) :-
 
 /* The Sokoban can move to any empty position in the board, but cannot go  */
 /* through boxes.                                                          */
-%% :- table can_reach/4.
+%:- table can_reach/4.
 can_reach(P1, P1, _Boxes, _Visited, []):- !.
 can_reach(P1, P2, Boxes, _Visited, [move(P1,Dir)]) :-
     neib(P1, P2, Dir),
@@ -115,7 +112,7 @@ good_move(X, Boxes) :-
 /* Selection of a good movement given a state:                             */
 /*  - any valid movement for every box                                     */
 /*  - the Sokoban must be able to access the push position                 */
-movement(state(Sokoban, Boxes), push(Box, Dir), SokobanMoves) :-
+movement(state(Sokoban, Boxes), push(Box, Dir), SokobanMoves, PushPosition) :-
     select(Box, Boxes, BoxesRemain),
     neib(Box, NextLoc, Dir),
     good_move(NextLoc, BoxesRemain),
